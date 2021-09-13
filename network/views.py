@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from django.shortcuts import HttpResponse, HttpResponseRedirect, render
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import User, Post, Comment, Follower
+from .models import User, Post, Comment, Follower, Like
 
 
 #def index(request):
@@ -76,6 +76,25 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
+@csrf_exempt
+@login_required
+def w_like(request):
+    data = json.loads(request.body)
+    #content = data.get("content")
+    w_post = data.get("w_post")
+    w_user = data.get("w_user")
+
+    #creator = User.objects.get(username=request.user.username)
+    user = User.objects.get(username=request.user.username)
+    post = Post.objects.get(pk=w_post)
+    #flight = Flight.objects.get(pk=flight_id)
+    #creator = User.objects.get(username=request.user.username)
+    like = Like(
+        user=user,
+        post=post
+    )
+    like.save()
+
 
 @csrf_exempt
 @login_required
@@ -95,10 +114,6 @@ def compose(request):
             "error": "Empty post is not permitted."
         }, status=400)
 
-    # Convert email addresses to users
-    """recipients = []
-    for email in emails:
-        try:"""
 
     creator = User.objects.get(username=request.user.username)
     post = Post(
@@ -180,7 +195,7 @@ def comment_add(request, post_id):
 
 #############################################################################
 
-def profile(request, creator_id):
+"""def profile(request, creator_id):
     username = request.user.username
     user = User.objects.get(username=username)
     user2 = User.objects.get(id=creator_id)
@@ -196,6 +211,36 @@ def profile(request, creator_id):
         if well.following == user2:
             cont = cont + 1
     return render(request, 'network/profile.html', {'page_obj': page_obj, 'user': user, 'user2': user2, "cont": cont})
+"""
+
+def profile(request, creator_id):
+    username = request.user.username
+    user = User.objects.get(username=username)
+    user2 = User.objects.get(id=creator_id)
+    #Airport.objects.filter(city="New York")
+    post_list = Post.objects.filter(creator=user2)
+    post_list = post_list.order_by("-time_of_creation").all()
+    paginator = Paginator(post_list, 10) # Show 10 contacts per page.
+    page_number = request.GET.get('page',)
+    page_obj = paginator.get_page(page_number)
+    wells = Follower.objects.all().filter(user=user)
+    y_cont = Follower.objects.all().filter(user=user).count()
+    w_cont = Follower.objects.all().filter(user=user2).count()
+    cont = 0
+    for well in wells:
+        if well.following == user2:
+            cont = cont + 1
+
+    x_cont = user.followed.all().count()
+    z_cont = user2.followed.all().count()
+    #for well in wells:
+    #    if well.following == user2:
+    #        w_cont = W_cont + 1
+    return render(request, 'network/profile.html', {'page_obj': page_obj, 'user': user, 'user2': user2, "w_cont": int(w_cont), "x_cont": int(x_cont), "z_cont": int(z_cont), 'y_cont': int(y_cont), 'cont': int(cont)})
+
+
+
+
 
 
 #####################################
