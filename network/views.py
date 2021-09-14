@@ -79,22 +79,38 @@ def register(request):
 @csrf_exempt
 @login_required
 def w_like(request):
-    data = json.loads(request.body)
-    #content = data.get("content")
-    w_post = data.get("w_post")
-    w_user = data.get("w_user")
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        #content = data.get("content")
+        w_post = data.get("w_post")
+        post = Post.objects.get(pk=w_post)
+        user = request.user
+        #creator = User.objects.get(username=request.user.username)
 
-    #creator = User.objects.get(username=request.user.username)
-    user = User.objects.get(username=request.user.username)
-    post = Post.objects.get(pk=w_post)
-    #flight = Flight.objects.get(pk=flight_id)
-    #creator = User.objects.get(username=request.user.username)
-    like = Like(
-        user=user,
-        post=post
-    )
-    like.save()
+        #flight = Flight.objects.get(pk=flight_id)
+        #creator = User.objects.get(username=request.user.username)
+        like = Like(
+            user=user,
+            post=post
+        )
+        like.save()
+        counter = Like.objects.filter(post=post).count()
+        return JsonResponse({
+            "Success": "like added",
+            "likecount":str(counter)
+        }, status=200)
+    return JsonResponse({
+        "Error": "get methode"
+    }, status=400)
 
+@csrf_exempt
+@login_required
+def likecounter(request,id):
+    post = Post.objects.get(pk=id)
+    counter = Like.objects.filter(post=post).count()
+    return JsonResponse({
+        "likecount":str(counter)
+    }, status=200)
 
 @csrf_exempt
 @login_required
